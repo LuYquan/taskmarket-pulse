@@ -1,0 +1,43 @@
+Taskmarket live market visualizer — deliverable notes
+Bounty: TSK-BRK611AN ("Build and host Taskmarket's live market visualizer")
+
+Live URL: https://luyquan.github.io/taskmarket-pulse/
+Repo URL: https://github.com/LuYquan/taskmarket-pulse
+
+Stack: static HTML + vanilla JS (no framework, no build step, no tracking) +
+  generated data.json. Inline SVG charts. Brand fonts/mark hotlinked from
+  Taskmarket's official brand kit gist.
+
+Endpoints used (https://api.taskmarket.dev, public, no key):
+  - /api/market/stats?chainId={8453,4217}
+  - /api/stats/breakdowns?chainId={8453,4217}
+  - /api/stats/platform-time-series?chainId=8453&range=7d|30d|90d|all&bucket=day|week
+  - /api/stats/activity-heatmap?chainId=8453&range=30d&dimension=hourOfWeek|mode
+  - /api/stats/activity-feed?chainId={8453,4217}&limit=50
+  - /api/tasks?chainId={8453,4217}&status={open,completed,cancelled,expired,claimed,
+    pending_approval,worker_selected}&sort=newest&limit=100 (fully paginated)
+
+Refresh method/frequency: server-side fetch in GitHub Actions, hourly
+  (.github/workflows/refresh.yml runs scripts/fetch.py, commits data.json if
+  changed, and redeploys to Pages). The page itself makes no API calls.
+  Data cached >= 60s; visible "Data as of" time (UTC) in the header and footer.
+
+Deploy command (one command):
+  git push origin main
+  (GitHub Actions deploys to Pages automatically; no secrets or server needed.
+  Pages source must be "GitHub Actions" in the repo settings.)
+
+Verification (as of the 2026-11-25 10:19 UTC fetch, recorded in data.json):
+  - Open tasks: live list 4 Base + 48 Tempo = 52, matches market/stats openTasks 52
+  - Mode total (1,705) = time-series all-time tasks created (1,705)
+  - Status total = mode total (1,705); live task list fully paginated (1,545 tasks,
+    27 pages) — 160-task gap vs breakdowns, entirely in open/claimed/
+    worker_selected, disclosed in the page's methods section
+  - 90d: $3,066.51 posted, $1,586.90 paid (51.8%); 7d: $747.90 paid
+  - Page verified in a headless DOM render: 6 stat tiles, series + weekly
+    charts, 5 mode bars, 7 status bars, 168 heatmap cells, 4 insight cards,
+    52 open-task rows, 50 feed items, 5/5 method checks pass; range/metric/
+    chain-filter interactions all work. Load: index.html 35 KB + data.json 106 KB.
+
+License: MIT. Made for a paid Taskmarket bounty; not an official Taskmarket product.
+Stays up at least 30 days after any payout.
